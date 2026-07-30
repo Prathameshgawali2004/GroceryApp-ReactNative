@@ -1,30 +1,44 @@
-import {TouchableOpacity,Text} from 'react-native';
+import React, { useContext } from 'react';
+import { TouchableOpacity, Text } from 'react-native';
+import { ThemeContext } from '../ThemeContext';
 
+const CustomButton = ({ onPress, title, bgColor, textColor }) => {
 
-const CustomButton = ({onPress,title,bgColor,textColor}) => {
-    return(
+  const { isDark } = useContext(ThemeContext);
 
-        <TouchableOpacity style={{
-        backgroundColor: bgColor,
-        justifyContent:'center', 
-        alignSelf:'center',
-        alignItems:'center',
-        width:'90%',
-        height:50,
-        borderRadius:10,
-        marginTop:50,
+  return (
+    <TouchableOpacity
+      style={{
+        backgroundColor: bgColor
+          ? bgColor
+          : isDark
+            ? '#333'
+            : '#000',
+
+        justifyContent: 'center',
+        alignSelf: 'center',
+        alignItems: 'center',
+        width: '90%',
+        height: 50,
+        borderRadius: 10,
+        marginTop: 50,
+      }}
+      onPress={onPress}
+    >
+      <Text
+        style={{
+          color: textColor
+            ? textColor
+            : isDark
+              ? '#fff'
+              : '#fff',
+          fontWeight: '600'
         }}
-               onPress={() => {
-                onPress();
-}}           
->
-    
-    <Text style={{color:textColor,}}>{title}</Text>
-
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
-
-      
-    )
-}
+  );
+};
 
 export default CustomButton;

@@ -1,16 +1,20 @@
-// import {View} from 'react-native';
 import React from 'react';
-import AppNavigator from './src/AppNavigator'
+import { Provider } from 'react-redux';
+import MainContainer from './src/MainContainer';
+import Store from './src/Redux/Store/Store';
+import { ThemeProvider } from './src/ThemeContext';
+
 const App = () => {
-        return (
-         
-            <AppNavigator/>
-          
-        )
-}
+  return (
+    <Provider store={Store}>
+      <ThemeProvider>
+        <MainContainer />
+      </ThemeProvider>
+    </Provider>
+  );
+};
 
 export default App;
-
 
 
 

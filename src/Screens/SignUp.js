@@ -1,113 +1,189 @@
-import { Text, View, Image ,ScrollView} from 'react-native';
-import { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { Text, View, Image, ScrollView, Alert } from 'react-native';
 import CustomInput from '../Custom/CustomInput';
 import CustomButton from '../Custom/CustomButton';
 import { useNavigation } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../ThemeContext';
 const SignUp = () => {
 
-const [email, setEmail] = useState('');
+  const navigation = useNavigation();
+  const { isDark } = useContext(ThemeContext);
+
+  // States
+  const [email, setEmail] = useState('');
+  const [hidePassword, setHidePassword] = useState(true);
   const [password, setPassword] = useState('');
-  const [name,setName] = useState('');
-  const [phone,setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
 
-  const navigation=useNavigation();
+  // Validation
+  const [badEmail, setBadEmail] = useState(false);
+  const [badPassword, setBadPassword] = useState(false);
+  const [badName, setBadName] = useState(false);
+  const [badPhone, setBadPhone] = useState(false);
 
-        return (
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-                <ScrollView style={{flex:1}}  
-                contentContainerStyle={{ paddingBottom: 30 }}
-                showsVerticalScrollIndicator={false}>
-                
-                <View style={{flex:1}}>
+  const saveData = async () => {
+    await AsyncStorage.setItem('NAME', name);
+    await AsyncStorage.setItem('EMAIL', email);
+    await AsyncStorage.setItem('PHONE', phone);
+    await AsyncStorage.setItem('PASSWORD', password);
 
-                        <Image
-                                source={require('../Images/logo2.png')}
-                                style={{
-                                      
-                                        
-                                        width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    Alert.alert('Success', 'Account Created Successfully ✅', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  };
 
+  const signup = () => {
+    let valid = true;
 
+    if (name.trim() === '') {
+      setBadName(true);
+      valid = false;
+    } else setBadName(false);
 
-                                }}
-                                />
-                                <Text style={{
-                                                marginTop:15,
-                                                 marginBottom: 25,
-                                                alignSelf:'center',
-                                                fontSize:22,
-                                                fontWeight:'600',
-                                                color:'#000',
+    if (!emailRegex.test(email)) {
+      setBadEmail(true);
+      valid = false;
+    } else setBadEmail(false);
 
+    if (phone.length !== 10) {
+      setBadPhone(true);
+      valid = false;
+    } else setBadPhone(false);
 
-                                }}> Create New Account </Text>
+    if (password.length < 6) {
+      setBadPassword(true);
+      valid = false;
+    } else setBadPassword(false);
 
-                                 <CustomInput
-                                placeholder="Enter Name"
-                                iconName="person"
-                                value={name}
-                                onChangeText={setName}
-                        />
+    if (valid) saveData();
+  };
 
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#fff' }}
+      contentContainerStyle={{ paddingBottom: 30 }}
+      showsVerticalScrollIndicator={false}
+    >
 
-                        <CustomInput
-                                placeholder="Enter Email Id"
-                                iconName="email"
-                                value={email}
-                                onChangeText={setEmail}
-                        />
+      <View style={{ flex: 1 }}>
 
+        {/* IMAGE */}
+        <Image
+          source={require('../Images/logo2.png')}
+          style={{
+            width: '100%',
+            height: 200,
+            resizeMode: 'cover',
+            borderBottomLeftRadius: 30,
+            borderBottomRightRadius: 30,
+          }}
+        />
 
-                         <CustomInput
-                                placeholder="Enter Phone Number"
-                                iconName="phone"
-                                value={phone}
-                                onChangeText={setPhone}
-                        />
+        {/* TITLE */}
+        <Text style={{
+          marginTop: 20,
+          marginBottom: 25,
+          alignSelf: 'center',
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: isDark ? '#fff' : '#000'
+        }}>
+          Create New Account
+        </Text>
 
-                        <CustomInput
-                                placeholder="Enter Password"
-                                iconName="lock"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={true}
-                        />
+        {/* NAME */}
+        <CustomInput
+          placeholder="Enter Name"
+          iconName="person"
+          value={name}
+          onChangeText={(text) => {
+            setName(text);
+            setBadName(false);
+          }}
+          isDark={isDark}
+        />
 
-                        <CustomButton
-                                title="Sign Up"
-                                bgColor="#000"
-                                textColor="white"
-                                onPress={() => {
-                                        console.log('Email:',email);
-                                        console.log('Password:',password);
-                                }}
-                        />
+        {badName && <Text style={{ marginLeft: 15, color: 'red' }}>Enter Name</Text>}
 
-                        <Text style={{
+        {/* EMAIL */}
+        <CustomInput
+          placeholder="Enter Email"
+          iconName="email"
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            setBadEmail(false);
+          }}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          isDark={isDark}
+        />
 
-                                fontSize: 18,
-                                fontWeight: '800',
-                                alignSelf: 'center',
-                                marginTop: 20,
-                                textDecorationLine: 'underline'
+        {badEmail && <Text style={{ marginLeft: 15, color: 'red' }}>Invalid Email</Text>}
 
-                        }}
+        {/* PHONE */}
+        <CustomInput
+          placeholder="Enter Phone"
+          iconName="phone"
+          value={phone}
+          onChangeText={(text) => {
+            setPhone(text);
+            setBadPhone(false);
+          }}
+          keyboardType="phone-pad"
+          maxLength={10}
+          isDark={isDark}
+        />
 
-                                onPress={() => {
-                                        navigation.goBack();
-                                }}> Already have Account?
-                        </Text>
-                </View>
-</ScrollView>
-        );
+        {badPhone && <Text style={{ marginLeft: 15, color: 'red' }}>Invalid Phone</Text>}
 
+        {/* PASSWORD */}
+        <CustomInput
+          placeholder="Enter Password"
+          iconName="lock"
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            setBadPassword(false);
+          }}
+          secureTextEntry={hidePassword}
+          isPassword={true}
+          hidePassword={hidePassword}
+          setHidePassword={setHidePassword}
+          isDark={isDark}
+        />
+
+        {badPassword && <Text style={{ marginLeft: 15, color: 'red' }}>Min 6 chars</Text>}
+
+        {/* BUTTON */}
+        <CustomButton
+          title="Sign Up"
+          bgColor={isDark ? '#ffd814' : '#000'}
+          textColor={isDark ? '#000' : '#fff'}
+          onPress={signup}
+        />
+
+        {/* LOGIN LINK */}
+        <Text
+          style={{
+            fontSize: 16,
+            alignSelf: 'center',
+            marginTop: 20,
+            textDecorationLine: 'underline',
+            color: isDark ? '#fff' : '#000'
+          }}
+          onPress={() => navigation.goBack()}
+        >
+          Already have an account?
+        </Text>
+
+      </View>
+    </ScrollView>
+  );
 };
-
-
 
 export default SignUp;
