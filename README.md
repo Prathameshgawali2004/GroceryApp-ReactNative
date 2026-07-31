@@ -1,31 +1,30 @@
  🛒 Grocery App - React Native
 
-A simple Grocery Shopping App built using React Native with authentication, product browsing, cart system, 
-and checkout flow.
+A simple Grocery Shopping App built using React Native with authentication, product browsing, cart system, and checkout flow.
 
 ---
 
   Features
 
- User Login  
- User Signup 
- Home Screen with Product Listing
- Search & Category Filtering
- Wishlist Functionality
- Add to Cart System
- Quantity Management
- Checkout Flow
- Order Success Screen
- Address Management
- Dark Mode Support
- Redux State Management
- Drawer + Bottom Tab Navigation
+- User Login  
+- User Signup  
+- Home Screen with Product Listing  
+- Search & Category Filtering  
+- Wishlist Functionality  
+- Add to Cart System  
+- Quantity Management  
+- Checkout Flow  
+- Order Success Screen  
+- Address Management  
+- Dark Mode Support  
+- Redux State Management  
+- Drawer + Bottom Tab Navigation  
 
 ---
 
  App Demo
 
-[Watch Demo](https://youtu.be/l4cA2WvlRBo)
+👉 [Watch Demo](https://youtu.be/l4cA2WvlRBo)
 
 ---
 
