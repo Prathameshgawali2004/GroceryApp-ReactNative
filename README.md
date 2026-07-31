@@ -1,53 +1,46 @@
-🛒 Grocery App - React Native
+ 🛒 Grocery App - React Native
 
-A modern Grocery Shopping App built using React Native with Cart, Checkout, Orders, Wishlist, Address Management, Dark Mode and Razorpay Payment Integration.
+A simple Grocery Shopping App built using React Native with authentication, product browsing, cart system, and checkout flow.
 
- Features
-User Login & Signup
-Product Listing with Categories
-Search Products
-Add to Cart
-Wishlist Feature ❤️
-Quantity Management (+ / -)
-Checkout System
-Razorpay Payment Integration 💳
-Order History (My Orders)
-Address Management
-Dark Mode 🌙
-Drawer Navigation
-Bottom Tab Navigation
+---
 
+  Features
 
- Screenshots
-🏠 Home Screen
+- User Login  
+- User Signup  
+- Home Screen with Products  
+- Category Filtering  
+- Product Details Screen  
+- Wishlist Feature  
+- Add to Cart  
+- Quantity Management  
+- Checkout Flow  
+- Address Management  
+- Order Success Screen  
+- Drawer Navigation  
+- Bottom Tab Navigation  
+- Redux State Management  
 
-🛍️ Product Screen
+---
 
-🛒 Cart Screen
+ App Demo
 
-💳 Checkout Screen
+[Watch Demo](https://youtu.be/l4cA2WvlRBo)
 
-📦 Orders Screen
-
-❤️ Wishlist Screen
-
-👤 Profile Screen
+---
 
  Tech Stack
-React Native
-JavaScript
-Redux (State Management)
-React Navigation
-Razorpay Payment Gateway
-Context API (Dark Mode)
+
+- React Native  
+- JavaScript  
+- React Navigation  
+- Redux  
+- Axios  
+
+---
 
  Run Locally
+
+```bash
 npm install
 npx react-native run-android
-
-
- Author
-Prathamesh Gawali
-
-GitHub: https://github.com/Prathameshgawali2004
-Project: https://github.com/Prathameshgawali2004/foodies-react-native
