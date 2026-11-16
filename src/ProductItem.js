@@ -1,10 +1,12 @@
-import React, { useContext } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React,{useContext} from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from './Redux/Action/Action';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from './ThemeContext';
+import BASE_URL from './config/api'; // 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProductItem = ({ item, buttonText, onPressButton }) => {
 
@@ -33,7 +35,7 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
 
         <View style={styles.discountBadge}>
           <Text style={styles.discountText}>
-            🔥{item.discount}% OFF
+           🔥{item.discount || 10}% OFF
           </Text>
         </View>
       </View>
@@ -43,15 +45,64 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
           styles.heart,
           { backgroundColor: isDark ? '#2a2a2a' : '#fff' }
         ]}
-        onPress={() => {
-          if (isWishlist) {
-            const index = wishlist.findIndex(
-              data => data.id === item.id,
-            );
-            dispatch(removeFromWishlist(index));
-          } else {
-            dispatch(addToWishlist(item));
-          }
+        onPress={async () => {
+          try{
+            const token = await AsyncStorage.getItem('TOKEN');
+
+            if(!token){
+              Alert.alert('Login Required', 'Please login first');
+              return;
+            }
+
+            if(isWishlist){
+                 // Remove from wishlist
+              const response =  await fetch(
+                `${BASE_URL}/wishlist/${item.id}`,
+                {
+                  method:'DELETE',
+                  headers:{
+                    Authorization:token,
+                  },
+                },
+              );
+                  
+
+      dispatch(removeFromWishlist(item.id));
+
+                  Alert.alert('Success','Product removed  from wishlist');
+
+                }else{
+                      // Add to wishlist
+                  const response = await fetch(`${BASE_URL}/wishlist`,{
+                  method:'POST',
+                  headers:{
+                    'Content-Type':'application/json',
+                    Authorization:token,
+                  },
+
+                body: JSON.stringify({
+                    product_id: item.id,
+                  }),
+                });
+                  
+
+                  const result = await response.json();
+
+                  if(!response.ok){
+                    throw  new Error(result.message ||'Failed to add wishlist');
+                  }
+                    dispatch(addToWishlist(item));
+
+                    Alert.alert('Success','Product added to wishlist');
+                  }
+
+            } catch (error) {
+              console.log('WISHLIST ERROR:', error);
+                Alert.alert('Error', error.message|| 'Something went wrong');
+            }
+            
+          
+         
         }}>
         <Ionicons
           name={isWishlist ? 'heart' : 'heart-outline'}
@@ -69,7 +120,7 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
 
       <View style={styles.row}>
         <Text style={{ color: "#f08804", fontWeight: '600' }}>
-          ⭐ {item.rating}
+      ⭐ {item.rating || 4.2}
         </Text>
 
         <Text style={{
@@ -77,7 +128,7 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
           fontSize: 13,
           marginLeft: 5
         }}>
-          ({item.reviews})
+         ({item.reviews || 120})
         </Text>
       </View>
 
@@ -91,7 +142,7 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
         </Text>
 
         <Text style={styles.oldPrice}>
-          ₹{item.oldPrice}
+          ₹{item.oldPrice || item.price + 200}
         </Text>
       </View>
 
@@ -102,7 +153,7 @@ const ProductItem = ({ item, buttonText, onPressButton }) => {
               🏆 Best Seller
             </Text>
           </View>
-        ) : item.stock <= 5 ? (
+        ) : (item.stock || 10) <= 5 ? (
           <Text style={{ color: '#d32f2f', fontSize: 12 }}>
             🔥 Only {item.stock} Left
           </Text>

@@ -1,5 +1,5 @@
 import { createStore, combineReducers } from "redux";
-import CartReducer from "../Reducers/Reducers";
+import CartReducer from "../cartSlice";
 import AddressReducers from "../Reducers/AddressReducers";
 import OrderReducers from "../Reducers/OrderReducers";
 import WishlistReducer from "../Reducers/WishlistReducers";
@@ -8,8 +8,9 @@ import WishlistReducer from "../Reducers/WishlistReducers";
 const rootReducer = combineReducers({
     cart: CartReducer,
     addressList: AddressReducers,
-    orders: OrderReducers,
-    wishlist: WishlistReducer,
+    orders: OrderReducers, 
+     wishlist: WishlistReducer,
+  
 })
 const store = createStore(rootReducer);
 

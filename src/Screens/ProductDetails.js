@@ -199,7 +199,7 @@ const ProductDetails = ({ route }) => {
       </View>
 
       {/* BEST SELLER */}
-      {product.bestSeller && (
+      {Number(product.bestSeller) === 1 && (
         <View
           style={{
             backgroundColor: "#009688",

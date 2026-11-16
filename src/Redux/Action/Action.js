@@ -1,4 +1,10 @@
-import { ADD_TO_CART, REMOVE_FROM_CART, Add_ADDRESSS, DELETE_ADDRESS, ADD_ORDER, DELETE_ORDER, ADD_TO_WISHLIST, REMOVE_FROM_WISHLIST, DECREASE_QUANTITY, INCREASE_QUANTITY } from "../ActionType";
+import { ADD_TO_CART, REMOVE_FROM_CART, 
+    Add_ADDRESSS, DELETE_ADDRESS, 
+    ADD_ORDER, DELETE_ORDER,
+     ADD_TO_WISHLIST, 
+     REMOVE_FROM_WISHLIST, 
+     DECREASE_QUANTITY, 
+     INCREASE_QUANTITY,  SET_WISHLIST,} from "../ActionType";
 
 export const addItemToCart = data => ({
     type: ADD_TO_CART,
@@ -41,10 +47,10 @@ export const addToWishlist = data => ({
     payload: data,
 });
 
-export const removeFromWishlist = index => ({
+export const removeFromWishlist = productId => ({
 
     type: REMOVE_FROM_WISHLIST,
-    payload: index,
+    payload:  productId,
 })
 
 
@@ -60,7 +66,10 @@ export const decreaseQuantity = index => ({
     payload: index,
 })
 
-
+export const setWishlist = data => ({
+  type: SET_WISHLIST,
+  payload: data,
+});
 
 
 

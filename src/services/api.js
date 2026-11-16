@@ -1,67 +1,70 @@
-const BASE_URL = 'https://jsonplaceholder.typicode.com/posts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// GET
+
+
+const BASE_URL = 'http://192.168.1.3:3000';
+
+// Common API Function
+const apiRequest = async(endpoint, method = 'GET',body = null) => {
+        try{
+            const token = await AsyncStorage.getItem('TOKEN');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if(token){
+                headers.Authorization =`Bearer ${token}`;
+            }
+
+            const options = {
+             method,
+            headers,
+        };
+        if(body !== null){
+            options.body = JSON.stringify(body);
+        } 
+        const response = await fetch(`${BASE_URL}${endpoint}`,options);
+
+        const data = await response.json();
+        
+        if(!response.ok){
+            throw new Error(data.message ||'API request failed')
+        }
+        return data;
+    } catch (err){
+                console.log(`${method} API ERROR:`,err.message);
+                throw err;
+        }
+};
+
+          
+
+
+
+
+// GET ADDRESS
 
 export const getData = async () => {
-    try {
-        const res = await fetch(BASE_URL);
-        return await res.json();
-    } catch (err) {
-        console.log('GET ERROR:', err);
-        throw err;
-    }
-}
-
-// POST
-
-export const postData = async (body) => {
-    try {
-        const res = await fetch(BASE_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-
-        return await res.json();
-    } catch (err) {
-        console.log('POST ERROR:', err);
-        throw err;
-    }
-}
-
-// PUT
-
-export const updateData = async (id, body) => {
-    try {
-        const res = await fetch(`${BASE_URL}/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        })
-        return await res.json();
-    } catch (err) {
-        console.log('PUT ERROR:', err);
-        throw err;
-    }
+    return await apiRequest('/address','GET');
 };
 
 
-// DELETE
-export const deleteData = async (id) => {
-    try {
-        await fetch(`${BASE_URL}/${id}`, {
-            method: 'DELETE',
-        });
+// ADD ADDRESS
 
-        return true;
-    } catch (err) {
-        console.log('DELETE ERROR:', err);
-        throw err;
-    }
+export const postData = async (body) => {
+ return await apiRequest('/address','POST',body);   
 }
+
+
+// UPDATE ADDRESS
+
+export const updateData = async (id, body) => {
+return await apiRequest(`/address/${id}`,'PUT',body);   
+};
+
+
+// DELETE ADDRESS
+export const deleteData = async (id) => {
+return await apiRequest(`/address/${id}`,'DELETE');
+};
 
 

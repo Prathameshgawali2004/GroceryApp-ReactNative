@@ -1,35 +1,41 @@
 import React, { useState, useContext } from 'react';
 import { View, TouchableOpacity, Text, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation,useRoute } from '@react-navigation/native';
 import CustomInput from '../Custom/CustomInput';
 import CustomButton from '../Custom/CustomButton';
-import { useDispatch, useSelector } from 'react-redux';
-import { addAddress } from '../Redux/Action/Action';
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from '../ThemeContext';
-import { postData } from '../services/api';
+import { postData,updateData} from '../services/api';
 
 const AddAddress = () => {
 
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const route= useRoute();
   const { isDark } = useContext(ThemeContext);
 
-  const [city, setCity] = useState('');
-  const [building, setBuilding] = useState('');
-  const [Pincode, setPincode] = useState('');
+  // Check edit address
+
+  const address = route.params?.address;
+  const isEdit = !!address?.id;
+
+  // Load existing address data
+  const[city,setCity] = useState(address?.city || '');
+  const [building, setBuilding] = useState(address?.building ||'');
+  const [Pincode, setPincode] = useState(
+  String(address?.pincode || '') );
   const [loading, setLoading] = useState(false);
-  const addressList = useSelector(state => state.addressList);
+ 
 
   //  MAIN SAVE FUNCTION
   const handleSave = async () => {
 
-    if (!city || !building || !Pincode) {
+    if (!city.trim() || !building.trim() || !Pincode.trim()) {
       Alert.alert("Error", "Please fill all fields");
       return;
     }
 
-    if (Pincode.length !== 6) {
+    if (!/^\d{6}$/.test(Pincode)) {
       Alert.alert("Error", "Enter valid 6 digit pincode");
       return;
     }
@@ -38,33 +44,34 @@ const AddAddress = () => {
       setLoading(true);
 
       //  API CALL
-      const res = await postData({
-        city,
-        building,
-        PinCode: Pincode,
-      });
+      const body ={
+        city:city.trim(),
+        building:building.trim(),
+        pincode: Pincode,
+      };
 
-      const newId = res?.id ? res.id : Date.now();
+      let res;
 
-      //  REDUX UPDATE
-      dispatch(addAddress({
-        id: newId,
-        city,
-        building,
-        PinCode: Pincode,
-        isDefault: addressList.length === 0
-      }));
+      // Edit or Add
 
-      setLoading(false);
+      if(isEdit){
+        res = await updateData(address.id,body);
+      } else{
+        res = await postData(body);
+      }
 
-      Alert.alert("Success", "Address Added Successfully");
-
+      Alert.alert("Success",
+        res.message ||(isEdit ? "Address Updated" : "Address added")
+        );
+      
       navigation.goBack();
 
     } catch (err) {
-      setLoading(false);
-      console.log(err);
-      Alert.alert("Error", "Something went wrong");
+      console.log('UPDATE ADDRESS ERROR:',err.message);
+
+      Alert.alert("Error", err.message || "Failed to update address");
+    } finally {
+      setLoading(false);  
     }
   };
 
@@ -115,7 +122,7 @@ const AddAddress = () => {
         marginHorizontal: 20,
         color: isDark ? '#fff' : '#000'
       }}>
-        Add New Address
+        {isEdit ? "Edit Address":"Add New Address"}
       </Text>
 
       {/* FORM CARD */}
@@ -166,7 +173,12 @@ const AddAddress = () => {
         marginTop: 30
       }}>
         <CustomButton
-          title={loading ? "Saving..." : "Save Address"}
+          title={
+            loading 
+            ?(isEdit ? "Updating..." : "Saving...")
+           : (isEdit ? "Update Address" : "Save Address")
+          }
+
           bgColor={isDark ? '#fff' : '#000'}
           textColor={isDark ? '#000' : '#fff'}
           onPress={handleSave}

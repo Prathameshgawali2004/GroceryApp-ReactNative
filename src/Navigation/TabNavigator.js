@@ -10,66 +10,72 @@ const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
 
-    const cartData = useSelector(state => state.cart)
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                headerShown: false,
+  const cartItems = useSelector(state => state.cart);
 
-                tabBarActiveTintColor: '#000',
-                tabBarInactiveTintColor: 'gray',
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
 
-                tabBarStyle: {
-                    height: 60,
-                    paddingBottom: 5,
-                },
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
 
-                tabBarIcon: ({ focused }) => {
+        tabBarActiveTintColor: '#000',
+        tabBarInactiveTintColor: 'gray',
 
-                    let icon = '';
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 5,
+        },
 
-                    if (route.name === 'Home') {
-                        icon = '🏠';
-                    }
+        tabBarIcon: ({ focused }) => {
 
-                    else if (route.name === 'Cart') {
-                        icon = '🛒';
-                    }
+          let icon = '';
 
-                    else if (route.name === 'Profile') {
-                        icon = '👤';
-                    }
+          if (route.name === 'Home') {
+            icon = '🏠';
+          }
 
-                    return (
-                        <Text style={{ fontSize: 24 }}>
-                            {icon}
-                        </Text>
-                    )
-                }
-            })}
-        >
+          else if (route.name === 'Cart') {
+            icon = '🛒';
+          }
 
-            <Tab.Screen
-                name="Home"
-                component={Home}
-            />
+          else if (route.name === 'Profile') {
+            icon = '👤';
+          }
 
-            <Tab.Screen
-                name="Cart"
-                component={Cart}
-                options={{
-                    tabBarBadge: cartData.length > 0 ? cartData.length : null,
+          return (
+            <Text style={{ fontSize: 24 }}>
+              {icon}
+            </Text>
+          );
+        },
+      })}
+    >
 
-                }}
-            />
+      <Tab.Screen
+        name="Home"
+        component={Home}
+      />
 
-            <Tab.Screen
-                name="Profile"
-                component={Profile}
-            />
-        </Tab.Navigator>
-    )
+      <Tab.Screen
+        name="Cart"
+        component={Cart}
+        options={{
+          tabBarBadge:
+            cartCount > 0 ? cartCount : null,
+        }}
+      />
 
-}
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+      />
+
+    </Tab.Navigator>
+  );
+};
 
 export default TabNavigator;

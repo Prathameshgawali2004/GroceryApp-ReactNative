@@ -1,10 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { Text, View, Image, ScrollView, Alert } from 'react-native';
+
 import CustomInput from '../Custom/CustomInput';
 import CustomButton from '../Custom/CustomButton';
+import Loader from '../Custom/Loader';
+
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
+import BASE_URL from '../config/api.js';
+
 const SignUp = () => {
 
   const navigation = useNavigation();
@@ -23,49 +27,127 @@ const SignUp = () => {
   const [badName, setBadName] = useState(false);
   const [badPhone, setBadPhone] = useState(false);
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Loader
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const saveData = async () => {
-    await AsyncStorage.setItem('NAME', name);
-    await AsyncStorage.setItem('EMAIL', email);
-    await AsyncStorage.setItem('PHONE', phone);
-    await AsyncStorage.setItem('PASSWORD', password);
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    Alert.alert('Success', 'Account Created Successfully ✅', [
-      { text: 'OK', onPress: () => navigation.goBack() }
-    ]);
-  };
+  const signup = async () => {
 
-  const signup = () => {
     let valid = true;
 
+    // Name validation
     if (name.trim() === '') {
       setBadName(true);
       valid = false;
-    } else setBadName(false);
+    } else {
+      setBadName(false);
+    }
 
-    if (!emailRegex.test(email)) {
+    // Email validation
+    if (
+      email.trim() === '' ||
+      !emailRegex.test(email.trim())
+    ) {
       setBadEmail(true);
       valid = false;
-    } else setBadEmail(false);
+    } else {
+      setBadEmail(false);
+    }
 
-    if (phone.length !== 10) {
+    // Phone validation
+    if (
+      phone.trim() === '' ||
+      phone.length !== 10
+    ) {
       setBadPhone(true);
       valid = false;
-    } else setBadPhone(false);
+    } else {
+      setBadPhone(false);
+    }
 
-    if (password.length < 6) {
+    // Password validation
+    if (password.trim() === '' || password.length < 6) {
       setBadPassword(true);
       valid = false;
-    } else setBadPassword(false);
+    } else {
+      setBadPassword(false);
+    }
 
-    if (valid) saveData();
+    
+    if (!valid) return;
+
+    setModalVisible(true);
+
+    try {
+
+      console.log("SIGNUP URL:", `${BASE_URL}/signup`);
+      const response = await fetch(`${BASE_URL}/signup`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: name.trim(),
+    email: email.trim(),
+    phone: phone.trim(),
+    password: password,
+  }),
+});
+
+console.log("HTTP STATUS:", response.status);
+
+
+      const data = await response.json();
+      console.log("SIGNUP RESPONSE:", data);
+
+      setModalVisible(false);
+
+      // Signup successful
+      if (data.success) {
+
+        Alert.alert(
+          "Success",
+          data.message || "Account Created Successfully ✅",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.goBack()
+            }
+          ]
+        );
+
+      } else {
+
+        Alert.alert(
+          "Signup Failed",
+          data.message || "Unable to create account"
+        );
+      }
+
+    } catch (error) {
+
+      setModalVisible(false);
+
+ console.log("SIGNUP NETWORK ERROR:", error);
+  console.log("BASE URL USED:", BASE_URL);
+  
+      Alert.alert(
+        "Connection Error",
+        "Backend server se connection nahi ho pa raha. Please backend start karo."
+      );
+    }
   };
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#fff' }}
-      contentContainerStyle={{ paddingBottom: 30 }}
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? '#121212' : '#fff'
+      }}
+      contentContainerStyle={{
+        paddingBottom: 30
+      }}
       showsVerticalScrollIndicator={false}
     >
 
@@ -84,14 +166,16 @@ const SignUp = () => {
         />
 
         {/* TITLE */}
-        <Text style={{
-          marginTop: 20,
-          marginBottom: 25,
-          alignSelf: 'center',
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: isDark ? '#fff' : '#000'
-        }}>
+        <Text
+          style={{
+            marginTop: 20,
+            marginBottom: 25,
+            alignSelf: 'center',
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: isDark ? '#fff' : '#000'
+          }}
+        >
           Create New Account
         </Text>
 
@@ -107,7 +191,17 @@ const SignUp = () => {
           isDark={isDark}
         />
 
-        {badName && <Text style={{ marginLeft: 15, color: 'red' }}>Enter Name</Text>}
+        {badName && (
+          <Text
+            style={{
+              marginLeft: 15,
+              marginTop: 5,
+              color: 'red'
+            }}
+          >
+            Enter Name
+          </Text>
+        )}
 
         {/* EMAIL */}
         <CustomInput
@@ -123,7 +217,17 @@ const SignUp = () => {
           isDark={isDark}
         />
 
-        {badEmail && <Text style={{ marginLeft: 15, color: 'red' }}>Invalid Email</Text>}
+        {badEmail && (
+          <Text
+            style={{
+              marginLeft: 15,
+              marginTop: 5,
+              color: 'red'
+            }}
+          >
+            Invalid Email
+          </Text>
+        )}
 
         {/* PHONE */}
         <CustomInput
@@ -139,7 +243,17 @@ const SignUp = () => {
           isDark={isDark}
         />
 
-        {badPhone && <Text style={{ marginLeft: 15, color: 'red' }}>Invalid Phone</Text>}
+        {badPhone && (
+          <Text
+            style={{
+              marginLeft: 15,
+              marginTop: 5,
+              color: 'red'
+            }}
+          >
+            Invalid Phone
+          </Text>
+        )}
 
         {/* PASSWORD */}
         <CustomInput
@@ -157,7 +271,17 @@ const SignUp = () => {
           isDark={isDark}
         />
 
-        {badPassword && <Text style={{ marginLeft: 15, color: 'red' }}>Min 6 chars</Text>}
+        {badPassword && (
+          <Text
+            style={{
+              marginLeft: 15,
+              marginTop: 5,
+              color: 'red'
+            }}
+          >
+            Password must be at least 6 characters
+          </Text>
+        )}
 
         {/* BUTTON */}
         <CustomButton
@@ -181,7 +305,14 @@ const SignUp = () => {
           Already have an account?
         </Text>
 
+        {/* LOADER */}
+        <Loader
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+        />
+
       </View>
+
     </ScrollView>
   );
 };

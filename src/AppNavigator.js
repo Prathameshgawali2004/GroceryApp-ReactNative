@@ -15,6 +15,7 @@ import Wishlist from './Screens/Wishlist';
 import Settings from './Screens/Settings';
 import ProductDetails from './Screens/ProductDetails'
 import Offers from './Screens/Offers'
+import EditProfile from './Screens/EditProfile';
 
 const Stack = createNativeStackNavigator()
 const AppNavigator = () => {
@@ -109,6 +110,11 @@ const AppNavigator = () => {
         component={Offers}
         options={{ headerShown: false }}
       />
+
+        <Stack.Screen
+        name="EditProfile"
+         component={EditProfile}
+/>
 
     </Stack.Navigator>
 

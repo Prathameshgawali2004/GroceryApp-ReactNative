@@ -1,25 +1,196 @@
-import React, { useContext } from 'react';
+import React, { useContext,useEffect,useState} from 'react';
 import { Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import {
-  removeFromCart,
-  increaseQuantity,
-  decreaseQuantity
-} from '../Redux/Action/Action';
 import CustomButton from '../Custom/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL from '../config/api.js';
+import { useDispatch} from 'react-redux';
+import {setCart,updateQuantity,removeFromCart} from '../Redux/cartSlice';
 
 const Cart = () => {
-  const cart = useSelector(state => state.cart);
   const dispatch = useDispatch();
-  const navigation = useNavigation();
 
+  const [apiCart,setApiCart] = useState([]);
+  const navigation = useNavigation();
   const { isDark } = useContext(ThemeContext);
 
-  const totalPrice = cart.reduce((total, item) => {
-    return total + item.price * item.quantity;
-  }, 0);
+  const totalPrice = apiCart.reduce((total, item) => {
+  return total + (item.price || 0) * item.quantity;
+}, 0);
+
+const totalItems = apiCart.reduce((sum, item) => {
+  return sum + item.quantity;
+}, 0);
+
+   // GET CART DATA
+useEffect(() => {
+  getCartData();  
+
+  const unsubscribe = navigation.addListener('focus', () => {
+    getCartData();
+  });
+
+  return unsubscribe;
+}, [navigation]);
+
+  const getCartData = async () => {
+  try{
+    const token = await AsyncStorage.getItem("TOKEN");
+
+    const response = await fetch(
+       `${BASE_URL}/cart`,
+      {
+        method:"GET",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":token
+        }
+      }
+    )
+    const data = await response.json();
+
+    // console.log("CART RESPONSE:", data);
+
+    if(Array.isArray(data)) {
+      setApiCart(data);
+      dispatch(setCart(data));
+    }else{
+      setApiCart([])
+      dispatch(setCart([]));
+      // console.log("CART API ERROR:", data);
+      setApiCart([]);
+    }
+
+  }catch (error){
+// console.log("CART ERROR:",error);
+}
+}
+
+
+      // increase
+
+const increaseQty =  async (item) => {
+
+  const newQuantity = item.quantity +1;
+  dispatch(
+      updateQuantity({
+          id:item.id,
+          quantity:newQuantity
+      })
+  )
+
+  //  UI update
+  setApiCart(prev =>
+    prev.map(i =>
+      i.id === item.id ? { ...i, quantity: newQuantity} : i
+    )
+  );
+
+    try{
+      const token = await AsyncStorage.getItem("TOKEN");
+      const response = await fetch(
+      `${BASE_URL}/cart/${item.id}`,
+      {
+        method :"PUT",
+        headers:{
+          "Content-Type": "application/json",
+          "Authorization":token
+        },
+
+        body:JSON.stringify({
+          quantity:newQuantity 
+        })
+    });
+
+      const data = await response.json();
+
+      // console.log("INCREASE RESPONSE:", data);
+
+  } catch(error){
+    // console.log( "INCREASE ERROR:",error);  
+  }
+}
+
+      // Decrease
+     
+  const decreaseQty =  async (item) => {
+    if(item.quantity <= 1){
+      return;
+    }
+    const newQuantity = item.quantity -1;
+    dispatch(
+        updateQuantity({
+          id:item.id,
+          quantity: newQuantity
+        })
+    );
+
+
+  setApiCart(prev =>
+    prev.map(i =>
+      i.id === item.id ? { ...i, quantity: newQuantity} : i
+    )
+  );
+
+    try{
+      const token = await AsyncStorage.getItem("TOKEN");
+      const response = await fetch(
+      `${BASE_URL}/cart/${item.id}`, 
+        {
+        method :"PUT",
+        headers:{
+          "Content-Type": "application/json",
+          "Authorization":token
+        },
+
+        body:JSON.stringify({
+          quantity:newQuantity 
+        })
+    });
+    const data = await response.json();
+    // console.log("DECREASE RESPONSE:",data)
+
+  } catch(error){
+    // console.log("DECREASE ERROR:",error);  
+  }
+}
+
+
+    // delete
+
+const removeItem = async (item) =>{
+  setApiCart(prev =>
+    prev.filter(i => i.id !==item.id)
+);
+ dispatch(removeFromCart(item.id));
+
+try{
+const token = await AsyncStorage.getItem ("TOKEN");
+const response = await fetch(
+  `${BASE_URL}/cart/${item.id}`,
+   {
+  method:'DELETE',
+  headers:{
+      "Authorization":token
+  }
+});
+
+const data = await response.json();
+
+// console.log(" DELETE RESPONSE:", data);
+
+
+ // DB se latest data 
+ getCartData();
+
+} catch (error){
+  // console.log("DELETE ERROR:",error);
+}
+
+};
+
+
 
   return (
     <View style={{
@@ -58,13 +229,13 @@ const Cart = () => {
           borderRadius: 20,
         }}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>
-            {cart.length}
+          {totalItems}
           </Text>
         </View>
       </View>
 
       {/* EMPTY CART */}
-      {cart.length === 0 ? (
+      {apiCart.length === 0 ? (
         <View style={{
           flex: 1,
           justifyContent: 'center',
@@ -80,8 +251,9 @@ const Cart = () => {
       ) : (
 
         <FlatList
-          data={cart}
-       keyExtractor={(item, index) => item.id + "_" + index}
+          data={apiCart}
+      //  keyExtractor={(item, index) => item.id + "_" + index}
+      keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <View style={{
@@ -107,7 +279,7 @@ const Cart = () => {
                   fontWeight: 'bold',
                   color: isDark ? '#fff' : '#000'
                 }}>
-                  {item.name}
+                   {item.name}
                 </Text>
 
                 <Text style={{
@@ -115,7 +287,7 @@ const Cart = () => {
                   fontSize: 18,
                   fontWeight: 'bold'
                 }}>
-                  ₹{item.price}
+                  {item.quantity}
                 </Text>
 
                 {/* Quantity */}
@@ -126,7 +298,7 @@ const Cart = () => {
                   marginTop: 10,
                 }}>
                   <TouchableOpacity
-                    onPress={() => dispatch(decreaseQuantity(index))}
+                    onPress={() => decreaseQty(item)}
                     style={{
                       backgroundColor: isDark ? '#333' : "#eee",
                       width: 30,
@@ -146,7 +318,7 @@ const Cart = () => {
                   </Text>
 
                   <TouchableOpacity
-                    onPress={() => dispatch(increaseQuantity(index))}
+                    onPress={() => increaseQty(item)}
                     style={{
                       backgroundColor: '#2874F0',
                       width: 30,
@@ -158,8 +330,9 @@ const Cart = () => {
                     <Text style={{ color: '#fff' }}>+</Text>
                   </TouchableOpacity>
                 </View>
+
                 <TouchableOpacity
-                  onPress={() => dispatch(removeFromCart(index))}
+                  onPress={() => removeItem(item)}
                   style={{
                     position: 'absolute',
                     top: 10,

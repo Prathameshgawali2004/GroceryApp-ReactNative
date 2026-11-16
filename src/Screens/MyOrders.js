@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, {useContext,useState,useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,158 @@ import {
   Image,
   SafeAreaView,
   StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  
 } from 'react-native';
-import { useSelector } from 'react-redux';
 import { ThemeContext } from '../ThemeContext';
 import { lightTheme, darkTheme } from '../ThemeColors';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL from '../config/api.js';
 const MyOrders = () => {
-  const myOrders = useSelector(state => state.orders);
+  const [myOrders,setMyOrders] = useState([]) ;
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState('');
+  const [cancellingId,setCancellingId] = useState(null);
 
   const { isDark } = useContext(ThemeContext);
   const theme = isDark ? darkTheme : lightTheme;
 
+  useEffect(()=>{
+    fetchMyOrders();
+  },[]);
+
+const fetchMyOrders = async() =>{
+  try{
+    const token = await AsyncStorage.getItem('TOKEN');
+    if(!token){
+      setError('Please login to view your orders.');
+    return;
+  }
+
+  const response = await  fetch(`${BASE_URL}/orders`,{
+   method: 'GET',
+   headers:{
+    Authorization: token,
+   },
+  });
+
+  const data = await response.json();
+
+  if(!response.ok || !data.success){
+    
+      throw new Error(data.message || 'failed to fetch orders');
+        }
+
+        setMyOrders(
+          data.orders.map(order =>({
+            ...order,
+            total: order.total_amount,
+            paymentId: order.payment_id,
+            orderDate:order.created_at
+            ? new Date(order.created_at).toLocaleDateString()
+            : '',
+            orderTime: order.created_at
+            ? new Date(order.created_at) .toLocaleTimeString()
+            :'',
+            items: order.items.map(product =>({
+              ...product,
+              name:product.name,
+             image:product.image,
+            
+            })),
+          }))
+        );
+  }
+  catch(err){
+    console.log('FETCH ORDERS ERROR:',err);
+    setError(err.message ||'unable to load orders,');
+  } finally {
+    setLoading(false);
+  }
+  
+};
+
+const cancelOrder = (orderId) =>{
+  Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+          {
+            text:'No',
+            style:'cancel',
+          },
+
+          {
+              text:'Yes, Cancel',
+              style : 'destructive',
+              onPress: async () => {
+                try{
+                  setCancellingId(orderId);
+                
+                const token = await AsyncStorage.getItem('TOKEN');
+
+                const response = await  fetch(
+                  `${BASE_URL}/orders/${orderId}/cancel`,
+                  {
+                    method:'PUT',
+                    headers:{
+                      Authorization:`Bearer ${token}`,
+                      'Content-type':'application/json',
+                    },
+                  }
+                );
+                  const result = await response.json();
+                  if(!response.ok || !result.success){
+                    throw new Error(result.message || 'Failed to cancel order');
+                  }
+
+                  setMyOrders(prevOrders =>
+                    prevOrders.map(order =>
+                      order.id === orderId
+                      ?{...order,status:'CANCELLED'}  
+                      : order
+                    )
+                  );
+                  Alert.alert('Success','order cancelled successfully');
+                      } catch (error){
+                        Alert.alert('Error', error.message);
+                      } finally{
+                          setCancellingId(null);
+                      }
+                    },
+                  },
+                ]
+              )
+  
+}
+
+
+
+if(loading){
+  return(
+    <SafeAreaView 
+      style={[styles.emptyContainer,{backgroundColor:theme.background},
+      ]}>
+
+        <ActivityIndicator size="large" color="#FF6B00"/>
+        <Text style={{ color:theme.text,marginTop:10}}>
+          Loading orders.....
+          </Text>
+          </SafeAreaView>
+  );
+}
+
+  if(error){
+    return(
+      <SafeAreaView style={[styles.emptyContainer,{backgroundColor:theme.background},   
+      ]}>
+
+    <Text style={{color: theme.text}}>{error}</Text>
+      </SafeAreaView>
+  )
+}
   if (myOrders.length === 0) {
     return (
       <SafeAreaView style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
@@ -28,6 +169,15 @@ const MyOrders = () => {
   }
 
   const renderOrder = ({ item }) => {
+    const trackingSteps =[
+        'PLACED' ,
+        'CONFIRMED',
+         'SHIPPED', 
+        'DELIVERED',
+        ];
+
+        const currentStep = trackingSteps.indexOf(item.status)
+
     return (
       <View style={[styles.orderCard, { backgroundColor: theme.card }]}>
         <Text style={[styles.heading, { color: theme.text }]}>
@@ -50,6 +200,97 @@ const MyOrders = () => {
           💳 <Text style={styles.bold}>Payment Status:</Text>
           <Text style={{ color: 'green', fontWeight: 'bold' }}> Paid</Text>
         </Text>
+
+
+        <Text style={[styles.text, { color: theme.text }]}>
+                Order Status:{' '}
+  <Text
+    style={{
+      color:
+        
+  item.status === 'CANCELLED'
+    ? '#D32F2F'
+    : item.status === 'DELIVERED'
+    ? '#2E7D32'
+    : item.status === 'SHIPPED'
+    ? '#1976D2'
+    : '#F57C00',
+      fontWeight: 'bold',
+    }}
+  >
+    {item.status}
+  </Text>
+</Text>
+
+
+    {/* ORDER TRACKING UI */}
+    {item.status === 'CANCELLED' ?(
+      <Text style={{color:'#D32F2F', marginTop:10, fontWeight:'bold'}}>
+        ❌ This Order has been Cancelled
+      </Text>
+    ):(
+      <View style={{ marginTop:15,padding:12,backgroundColor: theme.background, borderRadius:10}}>
+        <Text style={{  fontSize: 17,
+          fontWeight: 'bold',
+         color:theme.text,
+         marginBottom: 15,
+        }}> Order Tracking
+        </Text>
+    
+        {trackingSteps.map((step, index) => {
+      const completed = index <= currentStep;
+
+              return (
+                <View key={step} style={{
+                  flexDirection:'row',
+                  alignItems: 'center',
+                  marginBottom: 15,
+                  }}>
+                    <View style={{
+                      width: 25,
+                      height: 25,
+                      borderRadius: 15,
+                       backgroundColor: completed ?'#2E7D32' : '#BDBDBD',
+                       justifyContent:'center',
+                       alignItems: 'center',
+                        }}>
+
+                          <Text style={{ color:'#fff'}}>
+                            {completed ? '✓' : index + 1}
+                            </Text>
+                        </View>
+
+                        <Text style={{ marginLeft: 12,
+                          color:theme.text, fontWeight: completed ? 'bold':'normal',
+                        }}>
+                          {step}
+                        </Text>
+                </View>
+                )
+              })}
+              </View>
+    )}
+
+      
+
+      {item.status ==='PLACED' && (
+        <TouchableOpacity 
+        disabled={cancellingId === item.id}
+        onPress={() => cancelOrder(item.id)}
+        style={{backgroundColor: '#3949AB',
+          padding:12,
+          borderRadius:10,
+          marginTop: 15,
+          alignItems:'center',
+          opacity: cancellingId === item.id ? 0.6 : 1,
+        }}>
+          <Text style={{color:'#fff',fontWeight:'bold'}}>
+            {cancellingId === item.id
+              ?'Cancelling...'
+              :'Cancel Order'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
         <Text style={[styles.text, { color: theme.text }]}>
           📅 <Text style={styles.bold}>Date:</Text> {item.orderDate}

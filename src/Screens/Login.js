@@ -10,10 +10,10 @@ import {
 import CustomInput from '../Custom/CustomInput';
 import CustomButton from '../Custom/CustomButton';
 import Loader from '../Custom/Loader';
-
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../ThemeContext';
+import BASE_URL from '../config/api.js';
 
 const Login = () => {
   const navigation = useNavigation();
@@ -28,19 +28,22 @@ const Login = () => {
   const [badPassword, setBadPassword] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const login = async () => {
+      // console.log('LOGIN FUNCTION START');
+
+  
     let valid = true;
 
-    if (email.trim() === '' || !emailRegex.test(email)) {
+    // Email validation
+    if (email.trim() === '' || !emailRegex.test(email.trim())) {
       setBadEmail(true);
       valid = false;
     } else {
       setBadEmail(false);
     }
 
+    // Password validation
     if (password.trim() === '') {
       setBadPassword(true);
       valid = false;
@@ -48,23 +51,60 @@ const Login = () => {
       setBadPassword(false);
     }
 
+    // Agar validation fail hai to API call mat karo
     if (!valid) return;
+    // debugger;
 
     setModalVisible(true);
 
-    const storedEmail = await AsyncStorage.getItem('EMAIL');
-    const storedPassword = await AsyncStorage.getItem('PASSWORD');
+    try {
+         console.log('BASE URL:', BASE_URL);
+      debugger;
+  const response = await fetch(`${BASE_URL}/login`, {
+  
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-    setTimeout(() => {
-      setModalVisible(false);
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password,
+          }),
+        });
 
-      if (email === storedEmail && password === storedPassword) {
-        navigation.replace('MainDrawer');
-      } else {
-        Alert.alert('Login Failed', 'Invalid Email or Password');
-      }
-    }, 1500);
-  };
+      const data = await response.json();
+
+      //   console.log('LOGIN STATUS:', response.status);
+      // console.log("LOGIN RESPONSE:", data);
+
+
+      if (response.ok && data.success && data.token) {
+    await AsyncStorage.setItem('TOKEN', data.token);
+    await AsyncStorage.setItem('USER', JSON.stringify(data.user));
+    await AsyncStorage.setItem('IS_LOGIN', 'true');
+
+    setModalVisible(false);
+    navigation.replace('MainDrawer');
+  } else {
+     setModalVisible(false);
+
+    Alert.alert(
+      'Login Failed',
+      data.message || 'Invalid email or password'
+    );
+  }
+} catch (error) {
+  console.log('LOGIN ERROR:', error);
+  setModalVisible(false);
+
+
+  Alert.alert(
+    'Connection Error',
+    'Backend connect hot nahi. BASE_URL ani backend server check kar.'
+  );
+}
+  }
 
   return (
     <ScrollView
@@ -151,7 +191,6 @@ const Login = () => {
             textColor={isDark ? '#000' : '#fff'}
             onPress={login}
           />
-
 
           <Text
             style={{

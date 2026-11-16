@@ -9,12 +9,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ThemeContext } from '../ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Settings = ({ navigation }) => {
 
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   const [notifications, setNotifications] = useState(true);
+  const handleLogout = async () => {
+    try{
+        await AsyncStorage.removeItem('TOKEN');
+        navigation.reset({
+        index: 0,
+        routes:[{ name:'Login'}],         
+        });
+    } catch (error){
+      console.log('LOGOUT ERROR:',error);
+      Alert.alert('Error','Unable to logout');
+    }
+  }
+
 
   return (
     <SafeAreaView
@@ -107,32 +121,39 @@ const Settings = ({ navigation }) => {
       </TouchableOpacity>
 
       {/* LOGOUT */}
-      <TouchableOpacity
-        onPress={() => {
-          Alert.alert('Logout', 'Are you sure?', [
-            { text: 'Cancel' },
-            {
-              text: 'Logout',
-              onPress: () => navigation.replace('Login') // adjust if needed
-            }
-          ]);
-        }}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 18,
-          marginTop: 20
-        }}>
-        <Ionicons name="log-out-outline" size={22} color="red" />
-        <Text style={{
-          marginLeft: 12,
-          fontSize: 16,
-          color: 'red',
-          fontWeight: 'bold'
-        }}>
-          Logout
-        </Text>
-      </TouchableOpacity>
+        {/* LOGOUT */}
+<TouchableOpacity
+  onPress={() => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: handleLogout,
+      },
+    ]);
+  }}
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    marginTop: 20,
+  }}
+>
+  <Ionicons name="log-out-outline" size={22} color="red" />
+
+  <Text style={{
+    marginLeft: 12,
+    fontSize: 16,
+    color: 'red',
+    fontWeight: 'bold',
+  }}>
+    Logout
+  </Text>
+</TouchableOpacity>
 
     </SafeAreaView>
   );

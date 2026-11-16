@@ -18,7 +18,7 @@ const Splash = () => {
 
     const timer = setTimeout(() => {
       navigation.replace('Login');
-    }, 2500);
+    }, 2800);
 
     return () => clearTimeout(timer);
   }, []);
@@ -30,15 +30,18 @@ const Splash = () => {
       alignItems: 'center',
       backgroundColor: isDark ? '#121212' : '#F6F4EE'
     }}>
-
       <Animated.Image
-        source={require('../Images/splash1.png')}
+        source={{
+            uri: 'https://cdn-icons-png.flaticon.com/512/891/891462.png'
+        }}      
+        resizeMode="contain"
         style={{
           width: 220,
           height: 220,
           transform: [{ scale }]
         }}
       />
+
 
       <Text style={{
         fontSize: 30,

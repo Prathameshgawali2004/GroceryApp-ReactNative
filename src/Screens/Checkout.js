@@ -5,22 +5,26 @@ import {
   Text,
   TouchableOpacity,
   Alert,
+
 } from 'react-native';
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import RazorpayCheckout from 'react-native-razorpay';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation,useFocusEffect} from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addOrder } from '../Redux/Action/Action';
 import { ThemeContext } from '../ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BASE_URL from '../config/api.js';
+
 
 const Checkout = ({ route }) => {
-
   const { isDark } = useContext(ThemeContext);
 
   const cartData = useSelector(state => state.cart);
-  const addressList = useSelector(state => state.addressList);
+  const[addressList,setaddressList] = useState([]);
+  const [addressLoading,setAddressLoading] = useState(false); 
 
   const buyNow = route?.params?.buyNow || false;
   const singleProduct = route?.params?.product ?? null;
@@ -31,14 +35,58 @@ const Checkout = ({ route }) => {
   const [selectedAddress, setSelectedAddress] = useState('');
 
   const dispatch = useDispatch();
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchAddresses = async() =>{
+        try{
+          setAddressLoading(true);
+
+          const token = await AsyncStorage.getItem('TOKEN');
+
+          
+
+          const response = await fetch(`${BASE_URL}/address`,{
+            method:'GET',
+          headers:{
+            'Content-Type':'application/json',
+            Authorization: `Bearer ${token}`,
+          },         
+          });
+
+          const result = await response.json();
+
+          if(!response.ok || !result.success){
+          throw new Error(result.message || 'Failed to fetch addresses');
+          }
+
+            setaddressList(result.address || []);
+
+          } catch (error) {
+            console.log('FETCH ADDRESS ERROR:',error);
+            Alert.alert('Error',error.message); 
+
+          } finally{
+            setAddressLoading(false);
+           }
+          };
+
+          fetchAddresses();
+          },[])
+          );
+        
+
+
+  
   const navigation = useNavigation();
 
   const platformFee = 10;
 
   const getSubtotal = () => {
     let total = 0;
+
     products.forEach(item => {
-      total += Number(item.price) * item.quantity;
+      total += Number(item.price) * Number(item.quantity ||1);
     });
     return total;
   };
@@ -48,8 +96,7 @@ const Checkout = ({ route }) => {
   };
 
 
-
-  const renderProduct = ({ item }) => {
+  const renderProduct = ({ item,index}) => {
     return (
       <View style={{
         flexDirection: 'row',
@@ -119,6 +166,96 @@ const Checkout = ({ route }) => {
         </View>
       </View>
     );
+  };
+
+  const handlePlaceOrder = async() =>{
+    if(!selectedAddress){
+      Alert.alert('Select address','Please select delivery address.');
+      return;
+    }
+
+    if(!products || products.length ===0){
+      Alert.alert('Empty Cart','please add products before checkout.');
+      return;
+    }
+
+    try{
+        const token = await AsyncStorage.getItem('TOKEN');
+        if(!token){
+          Alert.alert('Login Required','Please login again.');
+          return;
+        }
+
+          const options = {
+        description: 'Order Payment',
+        currency: 'INR',
+        key: 'rzp_test_T8DAX21eWNiKj1',
+        amount: Math.round(getTotal() * 100),
+        name: 'ShopEase',
+      };
+
+          // Open Razorpay payment
+
+  
+      console.log('CHECKOUT START');
+    console.log('AMOUNT:', getTotal() * 100);
+    console.log('TOKEN:', token);
+          const paymentData = await RazorpayCheckout.open(options);
+
+             // Save order after payment success
+
+             console.log('PAYMENT SUCCESS:', paymentData);
+            
+
+              const response = await fetch(`${BASE_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+         Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          address: selectedAddress,
+          payment_id: paymentData.razorpay_payment_id,
+
+          buy_now: buyNow,
+          product_id: buyNow ? products[0].id: null,
+          quantity:  buyNow ? Number(products[0].quantity || 1): null,
+        }),
+      });
+
+       const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || 'Payment succeeded, but order could not be saved.'
+        );
+      }
+
+      const now = new Date();
+
+       // Save order to Redux only after backend success
+       dispatch(
+        addOrder({
+          items: products,
+          total: getTotal(),
+          address: selectedAddress,
+          paymentId: paymentData.razorpay_payment_id,
+          orderDate: now.toLocaleDateString(),
+          orderTime: now.toLocaleTimeString(),
+        })
+      );
+
+      navigation.replace('OrderSuccess');
+    } catch (error) {
+      // console.log('Checkout error:', error);
+
+      Alert.alert(
+        'Checkout Error',
+        error?.description ||
+          error?.message ||
+          'Checkout could not be completed. Please verify payment status before retrying.'
+      );
+    }
   };
 
   return (
@@ -215,7 +352,7 @@ const Checkout = ({ route }) => {
         ListFooterComponent={
           <>
             {addressList.map((item, index) => {
-              const addressString = `${item.city}-${item.building}-${item.PinCode}`;
+              const addressString = `${item.city}-${item.building}-${item.pincode}`;
 
               return (
                 <TouchableOpacity
@@ -254,7 +391,7 @@ const Checkout = ({ route }) => {
                   </Text>
 
                   <Text>
-                    {item.PinCode}
+                    {item.pincode}
                   </Text>
 
                   {selectedAddress === addressString && (
@@ -284,83 +421,31 @@ const Checkout = ({ route }) => {
         padding: 15,
         elevation: 20,
       }}>
-
-        <TouchableOpacity
+<TouchableOpacity
           style={{
             backgroundColor: '#FF6A00',
             padding: 16,
             borderRadius: 12,
-            alignItems: 'center'
+            alignItems: 'center',
           }}
-          onPress={() => {
-
-            if (selectedAddress === '') {
-              Alert.alert('Select Address', 'Please select address');
-              return;
-            }
-
-            const now = new Date();
-            const orderDate = now.toLocaleDateString();
-            const orderTime = now.toLocaleTimeString();
-
-
-            const options = {
-              description: 'Order Payment',
-              currency: 'INR',
-              key: 'rzp_test_T8DAX21eWNiKj1',
-              amount: (getTotal() * 100).toString(),
-              name: 'ShopEase',
-            };
-
-            RazorpayCheckout.open(options)
-              .then(data => {
-
-                dispatch(addOrder({
-                  items: products,
-                  total: getTotal(),
-                  address: selectedAddress,
-                  paymentId: data.razorpay_payment_id,
-                  orderDate,
-                  orderTime,
-                }));
-
-                setTimeout(() => {
-                  navigation.replace('OrderSuccess');
-                }, 200);
-
-              })
-              .catch(() => {
-
-                dispatch(addOrder({
-                  items: products,
-                  total: getTotal(),
-                  address: selectedAddress,
-                  paymentId: 'FAILED_PAYMENT',
-                  orderDate,
-                  orderTime,
-                }));
-
-
-                setTimeout(() => {
-                  navigation.replace('OrderSuccess');
-                }, 200);
-
-              });
-          }}
+          onPress={handlePlaceOrder}
         >
-          <Text style={{
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: 18
-          }}>
+          <Text
+            style={{
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 18,
+            }}
+          >
             Place Order ₹{getTotal()}
           </Text>
         </TouchableOpacity>
-
       </View>
-
     </SafeAreaView>
   );
 };
 
 export default Checkout;
+
+
+
