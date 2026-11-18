@@ -3,8 +3,7 @@
 A Grocery Shopping App built using React Native with Login, Signup, Product Listing, Wishlist, Cart, Checkout, Razorpay Demo Payment, Backend API Integration and Order Management.
 
 ## 🎥 App Demo
-
-▶️ [Watch Grocery App Demo Video]Watch / Open Grocery App Demo
+[▶️ Watch Grocery App Demo Video](https://github.com/Prathameshgawali2004/GroceryApp-ReactNative/releases/tag/demo-1)
 
 ## Features
 
