@@ -4,7 +4,7 @@ A Grocery Shopping App built using React Native with Login, Signup, Product List
 
 ## 🎥 App Demo
 
-▶️ [Watch Grocery App Demo Video](WhatsApp.Video.2026-11-18.at.12.20.47.PM.mp4)
+▶️ [Watch Grocery App Demo Video]Watch / Open Grocery App Demo
 
 ## Features
 
