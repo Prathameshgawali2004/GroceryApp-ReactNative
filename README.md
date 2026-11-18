@@ -1,50 +1,50 @@
- 🛒 Grocery App - React Native
+🛒 Grocery App - React Native
+A Grocery Shopping App built using React Native with Login, Signup, Product Listing, Wishlist, Cart, Checkout, Razorpay Demo Payment, Backend API Integration and Order Management. 
 
-A simple Grocery Shopping App built using React Native with authentication, product browsing, cart system, and checkout flow.
+🎥 App Demo
+▶️ Watch Grocery App Demo Video
 
----
+Features
+• User Login
+• User Signup
+• Product Listing
+• Wishlist Management
+• Add to Cart
+• Update Product Quantity
+• Remove Items from Cart
+• Checkout
+• Razorpay Demo Payment Integration
+• Order History / My Orders
+• Backend API Integration
+• Redux State Management
 
-  Features
+Tech Stack
+• React Native
+• JavaScript
+• Redux
+• React Navigation
+• Node.js
+• Express.js
+• MySQL
+• JWT Authentication
+• Razorpay
 
-- User Login  
-- User Signup  
-- Home Screen with Product Listing  
-- Search & Category Filtering  
-- Wishlist Functionality  
-- Add to Cart System  
-- Quantity Management  
-- Checkout Flow  
-- Order Success Screen  
-- Address Management  
-- Dark Mode Support  
-- Redux State Management  
-- Drawer + Bottom Tab Navigation  
+Run Locally
+git clone https://github.com/Prathameshgawali2004/GroceryApp-ReactNative.git
 
----
-
- App Demo
-
-👉 [Watch Demo](https://youtu.be/l4cA2WvlRBo)
-
----
-
- Tech Stack
-
-- React Native  
-- JavaScript  
-- React Navigation  
-- Redux  
-- Axios  
-
----
-
- Run Locally
-
+cd GroceryApp-ReactNative
 npm install
+npx react-native start
+
+In another terminal:
 npx react-native run-android
 
- Author
+Backend Setup
+cd grocery-backend
+npm install
+Configure your MySQL database and API base URL, then start the backend server using the script configured in your backend package.json.
 
+Author
 Prathamesh Gawali
 
 GitHub: https://github.com/Prathameshgawali2004
